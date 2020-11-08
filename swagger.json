@@ -1,0 +1,190 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "V1.0",
+    "title": "Web-Cat-Scrapper",
+    "description": "Invoke scrapper on a website or a route page\nGet the scrapped result for a website or a route.\nGet the analytical data for a scrap result.\n",
+    "contact": {
+      "email": "c2karansingh@gmail.com"
+    }
+  },
+  "tags": [
+    {
+      "name": "Invoke",
+      "description": "Used to invoke the scrapper"
+    },
+    {
+      "name": "Get Result",
+      "description": "Used to get result of a scrape"
+    }
+  ],
+  "paths": {
+    "/prod/invoke_scrapper": {
+      "get": {
+        "tags": [
+          "Invoke"
+        ],
+        "summary": "Invoke the scrapper on a website or a route",
+        "operationId": "invoke",
+        "description": "Invoke scrapper on a website by passing the url and optional configuration\n* The url must include the protocol as the prefix, http:// or https://\n* The depth doesn't start at 0, but instead starts at 1 and can be specified as a parameter, defaults to 1\n* The timeout to validate a url can also be specified as a parameter, defaults to 3\n* The scrapper can now be invoked on a single route at a time, specify the method_type as `route-scrapper`\n* The scrapper uses two caching systems, one that stores data in dynamodb and one that uses the [`Etag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) specification to prevent scraping a static page twice. To prevent the second caching, to can pass `force_scrape:true` as a parameter.\n Specific to *orchestrated-scrapper**, you can also pass another parameter `route_timeout: number` to prevent a route from taking too long to respond, defaults to `60`.\n",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "url",
+            "type": "string",
+            "required": true,
+            "description": "Url to Scrape"
+          },
+          {
+            "in": "query",
+            "name": "depth",
+            "type": "number",
+            "description": "The depth level to scrape upto.",
+            "default": 1
+          },
+          {
+            "in": "query",
+            "name": "timeout",
+            "type": "number",
+            "description": "The timeout to validate the url.",
+            "default": 3
+          },
+          {
+            "in": "query",
+            "name": "force_scrape",
+            "type": "boolean",
+            "description": "A boolean whether to force scrape or not.",
+            "default": false
+          },
+          {
+            "in": "query",
+            "name": "method_type",
+            "type": "string",
+            "enum": [
+              "orchestrated-scrapper",
+              "website-scrapper",
+              "route-scrapper"
+            ],
+            "description": "The method to use for scraping",
+            "default": "orchestrated-scrapper"
+          },
+          {
+            "in": "query",
+            "name": "route_timeout",
+            "type": "number",
+            "description": "The timeout for an individual route. Only needed if invoking `orchestrated-scrapper`",
+            "default": 60
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "A status stating that the scrapper has been invoked",
+            "schema": {
+              "type": "object",
+              "items": {
+                "$ref": "#/definitions/InvokeScrapperResponseObject"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prod/get_data": {
+      "get": {
+        "tags": [
+          "Get Result"
+        ],
+        "summary": "Get the scraped data result from db",
+        "operationId": "get",
+        "description": "Get the result of a scrape on a website\n* The url must include the protocol as the prefix, http:// or https://\n",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "url",
+            "type": "string",
+            "required": true,
+            "description": "Url to Scrape"
+          },
+          {
+            "in": "query",
+            "name": "respond_with_data",
+            "type": "boolean",
+            "description": "Set to `true` if you wish to get analytical data",
+            "default": false
+          },
+          {
+            "in": "query",
+            "name": "respond_with_route",
+            "type": "boolean",
+            "description": "Set to `true` if you wish to get data for a route not a website",
+            "default": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data containing result for a website, with default options",
+            "schema": {
+              "type": "object",
+              "items": {
+                "$ref": "#/definitions/WebsiteResultObject"
+              }
+            }
+          },
+          "201": {
+            "description": "Data containing analytical data for a website, when `respond_with_data` is set to `true`",
+            "schema": {
+              "type": "object",
+              "items": {
+                "$ref": "#/definitions/WebsiteDataObject"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "InvokeScrapperResponseObject": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "example": "Scrapper Invoked"
+        }
+      }
+    },
+    "WebsiteResultObject": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "example": "78603ac8-9694-4d53-a904-3e62c913489b"
+          }
+        }
+      }
+    },
+    "WebsiteDataObject": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "example": "78603ac8-9694-4d53-a904-3e62c913489b"
+          }
+        }
+      }
+    }
+  },
+  "host": "r61g654q7k.execute-api.us-east-1.amazonaws.com"
+}
